@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 	"time"
+	"todo-list/pkg/db"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -29,6 +30,8 @@ func openDB(t *testing.T) *sqlx.DB {
 	if len(envFile) > 0 {
 		dbfile = envFile
 	}
+	err := db.Init(dbfile)
+	assert.NoError(t, err)
 	db, err := sqlx.Connect("sqlite", dbfile)
 	assert.NoError(t, err)
 	return db

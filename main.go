@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"todo-list/pkg/db"
 )
 
 func main() {
@@ -11,7 +12,15 @@ func main() {
 	http.Handle("/", http.FileServer(http.Dir(webDir)))
 	log.Printf("Serever work on %s", port)
 
-	err := http.ListenAndServe(":"+port, nil)
+	//work with database
+	dbFile := "scheduler.db"
+	defer db.DB.Close()
+	err := db.Init(dbFile)
+	if err != nil {
+		log.Fatal("err with database, $v", err)
+	}
+
+	err = http.ListenAndServe(":"+port, nil)
 	if err != nil {
 		log.Fatal("problem eith server", err)
 	}
