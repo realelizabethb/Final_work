@@ -10,18 +10,18 @@ import (
 func main() {
 	port := "7540"
 	webDir := "./web"
-	http.Handle("/", http.FileServer(http.Dir(webDir)))
-	log.Printf("Serever work on %s", port)
-
-	api.Init()
 
 	//work with database
 	dbFile := "scheduler.db"
-	defer db.DB.Close()
 	err := db.Init(dbFile)
 	if err != nil {
 		log.Fatal("err with database, $v", err)
 	}
+	defer db.DB.Close()
+
+	api.Init()
+	http.Handle("/", http.FileServer(http.Dir(webDir)))
+	log.Printf("Serever work on %s", port)
 
 	//блок работы
 	err = http.ListenAndServe(":"+port, nil)
