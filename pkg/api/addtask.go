@@ -37,9 +37,6 @@ func checkData(task *db.Task) error {
 
 	var next string
 	if len(task.Repeat) > 0 {
-		/*if task.Repeat == "w" || task.Repeat == "m" {
-			return errors.New("incorrect repeat")
-		}*/
 		next, err = date.WorkWithDate(today, task.Date, task.Repeat)
 		if err != nil {
 			return errors.New("incorrect repeat")

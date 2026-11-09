@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -49,4 +50,30 @@ func Tasks(limit int) ([]*Task, error) {
 		return nil, err
 	}
 	return tasks, nil
+}
+
+func GetTask(id string) (*Task, error) {
+	query := `SELECT id,date,title,comment,repeat FROM scheduler WHERE id=?`
+	var task Task
+	err := DB.QueryRow(query, id).Scan(&task.ID, &task.Date, &task.Title, &task.Comment, &task.Repeat)
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
+}
+
+func UpdateTask(task *Task) error {
+	query := `UPDATE scheduler SET date=?, title=?,comment=?,repeat=? WHERE id=?`
+	res, err := DB.Exec(query, task.ID, task.Date, task.Title, task.Comment, task.Repeat)
+	if err != nil {
+		return err
+	}
+	kol, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if kol == 0 {
+		return errors.New("incorrect query id")
+	}
+	return nil
 }
