@@ -64,7 +64,39 @@ func GetTask(id string) (*Task, error) {
 
 func UpdateTask(task *Task) error {
 	query := `UPDATE scheduler SET date=?, title=?,comment=?,repeat=? WHERE id=?`
-	res, err := DB.Exec(query, task.ID, task.Date, task.Title, task.Comment, task.Repeat)
+	res, err := DB.Exec(query, task.Date, task.Title, task.Comment, task.Repeat, task.ID)
+	if err != nil {
+		return err
+	}
+	kol, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if kol == 0 {
+		return errors.New("incorrect query id")
+	}
+	return nil
+}
+
+func DeleteTask(id string) error {
+	query := `DELETE FROM scheduler WHERE id=?`
+	res, err := DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	kol, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if kol == 0 {
+		return errors.New("incorrect query id")
+	}
+	return nil
+}
+
+func UpdateDate(date string, id string) error {
+	query := `UPDATE scheduler SET date=? WHERE id=?`
+	res, err := DB.Exec(query, date, id)
 	if err != nil {
 		return err
 	}

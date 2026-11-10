@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"time"
+	"todo-list/date"
 	"todo-list/pkg/db"
 )
 
@@ -57,6 +59,53 @@ func updateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err := db.UpdateTask(&task)
 	if err != nil {
 		writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with update"})
+		return
+	}
+	writeJson(w, http.StatusOK, map[string]any{})
+}
+
+func doneTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeJson(w, http.StatusBadRequest, ErrResp{Error: "incorrect id"})
+		return
+	}
+	task, err := db.GetTask(id)
+	if err != nil {
+		writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with db get task"})
+		return
+	}
+	if task.Repeat == "" {
+		err := db.DeleteTask(id)
+		if err != nil {
+			writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with db delete"})
+			return
+		}
+	} else {
+		now := time.Now()
+		nextDate, err := date.WorkWithDate(now, task.Date, task.Repeat)
+		if err != nil {
+			writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with changing date"})
+			return
+		}
+		err = db.UpdateDate(nextDate, id)
+		if err != nil {
+			writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with db update date"})
+			return
+		}
+	}
+	writeJson(w, http.StatusOK, map[string]any{})
+}
+
+func deleteTaskHandler(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		writeJson(w, http.StatusBadRequest, ErrResp{Error: "incorrect id"})
+		return
+	}
+	err := db.DeleteTask(id)
+	if err != nil {
+		writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with db delete task"})
 		return
 	}
 	writeJson(w, http.StatusOK, map[string]any{})

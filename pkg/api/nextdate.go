@@ -19,13 +19,13 @@ func nextDateHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		nowTime, err = time.Parse(DateForm, nowFromR)
 		if err != nil {
-			http.Error(w, "wrong date format", http.StatusBadRequest)
+			writeJson(w, http.StatusBadRequest, ErrResp{Error: "wrong date format"})
 			return
 		}
 	}
 	nextDate, err := date.WorkWithDate(nowTime, dateFromR, repeatFromR)
 	if err != nil {
-		http.Error(w, "err with repeat date", http.StatusBadRequest)
+		writeJson(w, http.StatusBadRequest, ErrResp{Error: "wrong date format"})
 		return
 	}
 	w.Header().Set("Content-type", "text/plain;charset=utf-8")
