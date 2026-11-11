@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -15,6 +16,8 @@ func Init() {
 	http.HandleFunc("/api/nextdate", TaskHandler)
 	http.HandleFunc("/api/nextdate/", TaskHandler)
 	http.HandleFunc("/api/", TaskHandler)
+
+	http.HandleFunc("/api/signin", signinHandler)
 
 }
 
@@ -69,4 +72,24 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte(`{"error":"incorrect path"}`))
 	}
+}
+
+func auth(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pass := os.Getenv("TODO_PASSWORD")
+		if len(pass) > 0 {
+			var jwtToken string
+			cookie, err := r.Cookie("token")
+			if err == nil {
+				jwtToken = cookie.Value
+			}
+			expToken := generateToken(pass)
+			valid := (jwtToken == expToken)
+			if !valid {
+				http.Error(w, "Authentication required", http.StatusUnauthorized)
+				return
+			}
+		}
+		next(w, r)
+	})
 }
