@@ -37,6 +37,7 @@ func Init(dbFile string) error {
 	}
 
 	if err = DB.Ping(); err != nil {
+		DB.Close()
 		return err
 	}
 

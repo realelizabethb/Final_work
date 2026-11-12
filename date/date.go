@@ -9,7 +9,7 @@ import (
 )
 
 func TrueDate(date time.Time, now time.Time) bool {
-	return !date.Before(now)
+	return date.After(now)
 }
 
 func WorkWithDate(now time.Time, date string, repeat string) (string, error) {
@@ -18,7 +18,6 @@ func WorkWithDate(now time.Time, date string, repeat string) (string, error) {
 	}
 	dateParse, err := time.Parse("20060102", date)
 	if err != nil {
-		fmt.Println("err with parse", err)
 		return "", err
 	}
 	repeatParse := strings.Split(repeat, " ")
@@ -31,8 +30,10 @@ func WorkWithDate(now time.Time, date string, repeat string) (string, error) {
 			}
 			interval, err := strconv.Atoi(repeatParse[1])
 			if err != nil {
-				fmt.Println("err with interval")
 				return "", err
+			}
+			if interval < 0 {
+				return "", fmt.Errorf("wrong interval")
 			}
 			if interval > 400 {
 				return "", fmt.Errorf("wrong interval")

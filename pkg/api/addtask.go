@@ -3,12 +3,15 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
 	"todo-list/date"
 	"todo-list/pkg/db"
 )
+
+const DateForm = "20060102"
 
 type ErrorResponse struct {
 	Error string `json:"error"`
@@ -20,48 +23,47 @@ type TaskResponse struct {
 func writeJson(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
+	err := json.NewEncoder(w).Encode(data)
+	if err != nil {
+		log.Printf("err encoding %v", err)
+	}
 }
 func checkData(task *db.Task) error {
 	now := time.Now()
-	today, _ := time.Parse("20060102", now.Format("20060102"))
+	today, _ := time.Parse(DateForm, now.Format(DateForm))
+	todayStr := today.Format(DateForm)
 
 	if task.Date == "" {
-		task.Date = today.Format("20060102")
+		task.Date = todayStr
+		return nil
 	}
 
-	okey, err := time.Parse("20060102", task.Date)
+	parsedDate, err := time.Parse(DateForm, task.Date)
 	if err != nil {
 		return errors.New("incorrect date formats")
 	}
-
-	var next string
-	if len(task.Repeat) > 0 {
-		next, err = date.WorkWithDate(today, task.Date, task.Repeat)
-		if err != nil {
-			return errors.New("incorrect repeat")
-		}
-	}
-
-	taskDateStr := task.Date
-
-	if !date.TrueDate(okey, today) {
-		if len(task.Repeat) == 0 {
-			task.Date = today.Format("20060102")
+	if parsedDate.Before(today) {
+		if task.Repeat == "" {
+			task.Date = todayStr
 		} else {
-			task.Date = next
-		}
-	} else if len(task.Repeat) > 0 {
-		if taskDateStr != today.Format("20060102") {
-			nextFromToday, err := date.WorkWithDate(today, today.Format("20060102"), task.Repeat)
-			if err == nil {
-				if nextFromToday < taskDateStr {
-					task.Date = nextFromToday
+			currentDate := task.Date
+			for {
+				next, err := date.WorkWithDate(today, currentDate, task.Repeat)
+				if err != nil {
+					return errors.New("incorrect repeat")
+				}
+				currentDate = next
+				nextTime, err := time.Parse(DateForm, currentDate)
+				if err != nil {
+					return errors.New("incorrect date formats")
+				}
+				if !nextTime.Before(today) {
+					task.Date = currentDate
+					break
 				}
 			}
 		}
 	}
-
 	return nil
 }
 func addTaskHandler(w http.ResponseWriter, r *http.Request) {

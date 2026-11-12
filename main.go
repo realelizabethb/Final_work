@@ -15,7 +15,8 @@ func main() {
 	dbFile := "scheduler.db"
 	err := db.Init(dbFile)
 	if err != nil {
-		log.Fatal("err with database, $v", err)
+		log.Printf("err with database, $v", err)
+		return
 	}
 	defer db.DB.Close()
 
@@ -26,7 +27,7 @@ func main() {
 	//блок работы
 	err = http.ListenAndServe(":"+port, nil)
 	if err != nil {
-		log.Fatal("problem eith server", err)
+		log.Fatal("problem with server", err)
 	}
 
 }

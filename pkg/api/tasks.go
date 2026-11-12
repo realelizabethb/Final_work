@@ -1,12 +1,17 @@
 package api
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 	"time"
 	"todo-list/date"
 	"todo-list/pkg/db"
 )
+
+const TaskLimit = 50
 
 type TasksResp struct {
 	Tasks []*db.Task `json:"tasks"`
@@ -16,7 +21,7 @@ type ErrResp struct {
 }
 
 func tasksHandler(w http.ResponseWriter, _ *http.Request) {
-	tasks, err := db.Tasks(50)
+	tasks, err := db.Tasks(TaskLimit)
 	if err != nil {
 		writeJson(w, http.StatusInternalServerError, ErrResp{Error: "err with db"})
 		return
@@ -34,7 +39,12 @@ func getTaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	task, err := db.GetTask(id)
 	if err != nil {
-		writeJson(w, http.StatusBadRequest, ErrResp{Error: "err with get task"})
+		if errors.Is(err, sql.ErrNoRows) {
+			writeJson(w, http.StatusNotFound, ErrResp{Error: "error with get task"})
+			return
+		}
+		log.Printf("error with db mrthod %v", err)
+		writeJson(w, http.StatusInternalServerError, ErrResp{Error: "internal server error"})
 		return
 	}
 	writeJson(w, http.StatusOK, task)
